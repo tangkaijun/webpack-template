@@ -19,7 +19,7 @@ const webpackBaseConfig = {
 		contentBase:'.',
 	},
 	plugins:[
-	    new CleanWebpackPlugin(['dist']),
+	    new CleanWebpackPlugin([resolve ('dist')]),
 	    new HtmlWebpackPlugin({
             template:path.resolve(__dirname,'../src/entry/index.html'),
             filename: 'index.html',
@@ -31,7 +31,7 @@ const webpackBaseConfig = {
 	    	 'process.env.ASSET_PATH': JSON.stringify(ASSET_PATH)
 	    }),
 	    new webpack.NamedModulesPlugin(),
-	    //new webpack.HotModuleReplacementPlugin(),
+	    new webpack.HotModuleReplacementPlugin(),
 	    new webpack.optimize.OccurrenceOrderPlugin()
 	],
 	optimization:{
@@ -41,8 +41,8 @@ const webpackBaseConfig = {
 		}
 	},
 	output:{
-		filename:'[name].[hash].js',
-		path:path.resolve(__dirname,'dist')//,
+		filename:'[name]-[hash].js',
+		path:resolve ('dist')//,
 		//publicPath:ASSET_PATH
 	},
 	resolve:{
