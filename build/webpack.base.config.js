@@ -8,75 +8,42 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 
+const node_env = process.env.NODE_NEV
+
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
 const webpackBaseConfig = {
 	entry:{
-		main:path.resolve(__dirname,'../src/entry/index.js'),
-		common:['lodash']  //配置公共模块
+		main:path.resolve(__dirname,'../src/entry/index.js')
 	},
 	devServer:{
 		contentBase:'.',
 	},
 	plugins:[
 	    new CopyWebpackPlugin([{ from: 'src/assets/images/**', to: 'dist/images/'}],{ debug: 'info' }),
-	    new ExtractTextPlugin({filename:'style.css',allChunks: true}),
-	    new CleanWebpackPlugin([resolve('dist')]),
+        new ExtractTextPlugin({filename:'style.css',allChunks: true}),
+        new CleanWebpackPlugin(['dist'],{root:process.cwd()}),
+        //HtmlWebpackPlugin插件用于创建一个html文件，将打包好的各种如js、css模块引用进去
 	    new HtmlWebpackPlugin({
-            template:path.resolve(__dirname,'../src/entry/index.html'),
-            filename: 'index.html',
-            inject:true,
-            hash:false ,
-            chunks:["common","main"]
+            template:path.resolve(__dirname,'../src/entry/index.html'),//指定将创建的html所使用的模板
+            filename: 'index.html',//指定生成的html文件名（可以带目录）
+            favicon:null,//添加特定的favicon路径输出到HTML文件中
+            title:'测试页',//生成页面title元素
+            cache:true,//如果为 true, 这是默认值，仅仅在文件修改之后才会发布文件
+            inject:true,// 'head'|'body'|false,注入所有的资源到特定的template或者templateContent中，如果设置为true或者body，所有的javascript资源将被放置到body元素的底部，'head'将放置到head元素中
+            chunksSortMode:'dependency',//允许控制块在添加到页面之前的排序方式，支持的值：'none' | 'default' | {function}-default:'auto'
+            hash:false ,//如果是true，会给所有包含的script和css添加一个唯一的webpack编译hash值。这对于缓存清除非常有用
+            excludeChunks:[]//允许跳过某些块，(比如，跳过单元测试的块) 
         }),
 	    new webpack.DefinePlugin({
 	    	 'process.env.ASSET_PATH': JSON.stringify(ASSET_PATH)
 	    }),
 	    new webpack.NamedModulesPlugin(),
-	    new webpack.HotModuleReplacementPlugin(),
-	    new webpack.optimize.OccurrenceOrderPlugin()
+        new webpack.optimize.OccurrenceOrderPlugin(),
+        new webpack.optimize.ModuleConcatenationPlugin() //webpack3之前打包，将各个模块打包到单独的闭包中，js执行速度慢，webpack3中提出的新特性提升作用域，将所有模块预编译打包到一个闭包中，提高浏览器执行js速度
 	],
-	optimization:{
-		splitChunks:{
-			name:'common',
-			filename:'[name]-[hash].js',
-			chunks: "initial", // 必须三选一： "initial" | "all"(默认就是all) | "async"
-            minSize: 0, // 最小尺寸，默认0
-            minChunks: 1, // 最小 chunk ，默认1
-            maxAsyncRequests: 1, // 最大异步请求数， 默认1
-            maxInitialRequests: 1, // 最大初始化请求书，默认1
-            cacheGroups: { // 这里开始设置缓存的 chunks
-            	default: {
-                    minChunks: 2,
-                    priority: -20,
-                    reuseExistingChunk: true,
-                },
-                priority:"0", // 缓存组优先级
-                vendor: { // key 为entry中定义的 入口名称
-                    chunks: "initial", // 必须三选一： "initial" | "all" | "async"(默认就是异步)
-                    name: "vendor", // 要缓存的 分隔出来的 chunk 名称
-                    minSize: 0,
-                    minChunks: 1,
-                    enforce: true,
-                    maxAsyncRequests: 1, // 最大异步请求数， 默认1
-                    maxInitialRequests: 1, // 最大初始化请求书，默认1
-                    reuseExistingChunk: true // 可设置是否重用该chunk（查看源码没有发现默认值）
-                },
-                commons: {  //打包第三方类库
-                    name: "commons",
-                    chunks: "initial",
-                    minChunks: Infinity
-                }
-            }
-		}
-	},
-	output:{
-		filename:'[name]-[hash].js',
-		path:resolve ('dist'),
-        publicPath:ASSET_PATH
-	},
 	resolve:{
 	        extensions: ['.js','.less', '.json'],
 	        alias: {
