@@ -6,7 +6,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');//拷贝资源
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");//优化压缩的css
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");//压缩css
-const UglifyJSPlugin = require("uglifyjs-webpack-plugin");//压缩js
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");//压缩js
 const ProgressBarPlugin = require('progress-bar-webpack-plugin');
 const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
 const HappyPack = require('happypack');
@@ -52,7 +52,19 @@ const webpackBaseConfig = {
             inject:true,// 'head'|'body'|false,注入所有的资源到特定的template或者templateContent中，如果设置为true或者body，所有的javascript资源将被放置到body元素的底部，'head'将放置到head元素中
             chunksSortMode:'dependency',//允许控制块在添加到页面之前的排序方式，支持的值：'none' | 'default' | {function}-default:'auto'
             hash:false ,//如果是true，会给所有包含的script和css添加一个唯一的webpack编译hash值。这对于缓存清除非常有用
-            excludeChunks:[]//允许跳过某些块，(比如，跳过单元测试的块) 
+            excludeChunks:[],//允许跳过某些块，(比如，跳过单元测试的块) 
+            minify: {
+                removeComments: true,
+                collapseWhitespace: true,
+                removeRedundantAttributes: true,
+                useShortDoctype: true,
+                removeEmptyAttributes: true,
+                removeStyleLinkTypeAttributes: true,
+                keepClosingSlash: true,
+                minifyJS: true,
+                minifyCSS: true,
+                minifyURLs: true,
+              },
         }),
 	    new webpack.DefinePlugin({
 	    	 'process.env.ASSET_PATH': JSON.stringify(ASSET_PATH)
@@ -127,7 +139,7 @@ const webpackBaseConfig = {
             }
 		},
 		minimizer: [
-            new UglifyJSPlugin({
+            new UglifyJsPlugin({
                 uglifyOptions:{
                   warnings: false,
                   output: {

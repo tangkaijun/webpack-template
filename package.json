@@ -4,9 +4,9 @@
   "description": "This is a webpack template",
   "main": "app.js",
   "scripts": {
-    "start": "set NODE_ENV=development&&webpack-dev-server --open --config build/webpack.dev.config.js",
+    "start": "cross-env NODE_ENV=development&&webpack-dev-server --open --config build/webpack.dev.config.js",
     "build:dll": "webpack -p --process --config build/webpack.dll.config.js",
-    "build": "set NODE_ENV=production&&webpack --profile --json > logs.json --config build/webpack.prod.config.js",
+    "build": "cross-env NODE_ENV=production&&webpack --profile --json > logs.json --config build/webpack.prod.config.js",
     "test": "npm run test"
   },
   "repository": {
@@ -47,10 +47,12 @@
     "babel-runtime": "^6.26.0",
     "clean-webpack-plugin": "^0.1.19",
     "copy-webpack-plugin": "^4.5.1",
+    "cross-env": "^5.2.0",
     "css-loader": "^1.0.0",
-    "happypack": "^5.0.0",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "file-loader": "^1.1.11",
+    "friendly-errors-webpack-plugin": "^1.7.0",
+    "happypack": "^5.0.0",
     "html-webpack-plugin": "^3.2.0",
     "mini-css-extract-plugin": "^0.4.3",
     "optimize-css-assets-webpack-plugin": "^5.0.1",
