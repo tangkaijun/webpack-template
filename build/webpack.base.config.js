@@ -1,29 +1,37 @@
 const webpack = require('webpack');
 const path = require('path');
+const chalk = require('chalk');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const babelPolyfill = require('babel-polyfill');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');//拷贝资源
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");//优化压缩的css
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");//压缩css
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");//压缩js
+const ProgressBarPlugin = require('progress-bar-webpack-plugin');
+const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
+
 
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 
-const node_env = process.env.NODE_NEV
-
+const devMode = process.env.NODE_ENV !== 'production'
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
 const webpackBaseConfig = {
 	entry:{
-		main:path.resolve(__dirname,'../src/entry/index.js')
+		app:path.resolve(__dirname,'../src/entry/index.js')
 	},
 	devServer:{
 		contentBase:'.',
 	},
 	plugins:[
+        new MiniCssExtractPlugin({
+            filename: devMode?'[name]-[hash:8].css':'[name].[chunkhHash:8].css',
+            chunkFilename: devMode?'[name]-[hash:8].css':'[id].[chunkHash:8].css',
+          }),
 	    new CopyWebpackPlugin([{ from: 'src/assets/images/**', to: 'dist/images/'}],{ debug: 'info' }),
-        new ExtractTextPlugin({filename:'style.css',allChunks: true}),
         new CleanWebpackPlugin(['dist'],{root:process.cwd()}),
         //HtmlWebpackPlugin插件用于创建一个html文件，将打包好的各种如js、css模块引用进去
 	    new HtmlWebpackPlugin({
@@ -42,8 +50,75 @@ const webpackBaseConfig = {
 	    }),
 	    new webpack.NamedModulesPlugin(),
         new webpack.optimize.OccurrenceOrderPlugin(),
-        new webpack.optimize.ModuleConcatenationPlugin() //webpack3之前打包，将各个模块打包到单独的闭包中，js执行速度慢，webpack3中提出的新特性提升作用域，将所有模块预编译打包到一个闭包中，提高浏览器执行js速度
-	],
+        new webpack.optimize.ModuleConcatenationPlugin(), //webpack3之前打包，将各个模块打包到单独的闭包中，js执行速度慢，webpack3中提出的新特性提升作用域，将所有模块预编译打包到一个闭包中，提高浏览器执行js速度
+        new ProgressBarPlugin({
+            format:  chalk.yellow('build '+process.env.NODE_ENV)+chalk.red('[:bar]')+ chalk.green.bold(':percent') + ' (:elapsed seconds)',
+            width:'600',
+            complete:">",
+            incomplete:"=",
+        }),
+        new webpack.DllReferencePlugin({// 描述 reacht动态模块的清单文件
+            manifest: resolve('dll/react.manifest.json')
+        }),
+        new AddAssetHtmlPlugin({
+            filepath: resolve("dll/react.dll.js"),
+            hash: true
+        }),
+    ],
+    output:{
+		filename:devMode?'[name]-[hash:8].js':'[name]-[chunkHash:8].js',
+        path:resolve ('dist'),
+        publicPath: ASSET_PATH,
+	},
+    optimization:{
+		runtimeChunk: {
+            name: 'manifest'
+        },
+		splitChunks:{
+			name:true,
+			chunks: "initial", // 必须三选一： "initial" | "all"(默认就是all) | "async"
+            minSize: 0, // 最小尺寸，默认0
+            minChunks: 2, // 最小 chunk ，默认1
+            maxAsyncRequests: 1, // 最大异步请求数， 默认1
+            maxInitialRequests: 1, // 最大初始化请求书，默认1
+            cacheGroups: { // 这里开始设置缓存的 chunks
+            	default: {
+                    minChunks: 1,
+                    priority: -20,
+                    reuseExistingChunk: true,
+                },
+                vendors: {//创建一个vendors块，其中包括node_modules整个应用程序中的所有代码。
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'all',
+                },   
+                'async-vendors': {// 处理异步chunk 
+                    test: /[\\/]node_modules[\\/]/,
+                    chunks: 'async',
+                    name: 'async-vendors'
+                },
+                styles: {
+                    chunks: 'all',
+                    name: 'styles',
+                    enforce: true,
+                    test: /.(css|scss|less)/
+                }
+            }
+		},
+		minimizer: [
+      new UglifyJsPlugin({
+             cache: true,
+             parallel: true,
+             sourceMap: true // set to true if you want JS source maps
+      }),
+      new OptimizeCSSAssetsPlugin({
+				assetNameRegExp: /\.optimize\.css$/g,
+                cssProcessor: require('cssnano'),
+                cssProcessorOptions: { safe: true, discardComments: { removeAll: true } },
+                canPrint: true
+			})
+     ]
+	},
 	resolve:{
 	        extensions: ['.js','.less', '.json'],
 	        alias: {
@@ -61,11 +136,13 @@ const webpackBaseConfig = {
                 exclude: /node_modules/
 			},
 			{
-                test: /\.(css)$/,
-                use: ExtractTextPlugin.extract({
-                    fallback: "style-loader",
-                    use: "css-loader"
-                })
+                test: /\.(sa|sc|c)ss$/,
+                use: [
+                devMode?'style-loader' : MiniCssExtractPlugin.loader,
+                'css-loader',
+               // 'postcss-loader',
+               // 'sass-loader',
+                ]
 			},
 			{
 				test: /\.(png|jpg|gif)$/,
