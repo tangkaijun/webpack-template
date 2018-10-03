@@ -1,3 +1,5 @@
+require('eventsource-polyfill');
+require('babel-polyfill');
 import _ from 'lodash';
 import '@/assets/style/base.css';
 import createElement from '@/common/common';
@@ -7,7 +9,7 @@ let component=()=> {
     var element = document.createElement('div');
     // Lodash, now imported by this script
     element.innerHTML = _.join(['Hello', 'Webpack'], ' ');
-    return element;
+    return element;  
 }
 
 userinfo();

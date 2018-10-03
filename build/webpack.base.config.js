@@ -3,14 +3,15 @@ const path = require('path');
 const chalk = require('chalk');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const babelPolyfill = require('babel-polyfill');
 const CopyWebpackPlugin = require('copy-webpack-plugin');//拷贝资源
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");//优化压缩的css
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");//压缩css
-const UglifyJsPlugin = require("uglifyjs-webpack-plugin");//压缩js
+const UglifyJSPlugin = require("uglifyjs-webpack-plugin");//压缩js
 const ProgressBarPlugin = require('progress-bar-webpack-plugin');
 const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
-
+const HappyPack = require('happypack');
+const os = require('os');
+const happyThreadPool = HappyPack.ThreadPool({ size: os.cpus().length });
 
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 
@@ -18,13 +19,21 @@ const devMode = process.env.NODE_ENV !== 'production'
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
-
+//
 const webpackBaseConfig = {
 	entry:{
 		app:path.resolve(__dirname,'../src/entry/index.js')
 	},
 	devServer:{
-		contentBase:'.',
+        contentBase:'.',
+        compress: true,
+        clientLogLevel: 'warning',//清空HMR 信息
+        stats: "errors-only",
+        historyApiFallback: true,
+        overlay: {
+            warnings: true,
+            errors: true
+        }
 	},
 	plugins:[
         new MiniCssExtractPlugin({
@@ -64,6 +73,18 @@ const webpackBaseConfig = {
             filepath: resolve("dll/react.dll.js"),
             hash: true
         }),
+        new HappyPack({
+            //用id来标识 happypack处理那里类文件
+          id: 'happyBabel',
+          //如何处理  用法和loader 的配置一样
+          loaders: [{
+            loader: 'babel-loader?cacheDirectory=true',
+          }],
+          //共享进程池
+          threadPool: happyThreadPool,
+          //允许 HappyPack 输出日志
+          verbose: true,
+        })
     ],
     output:{
 		filename:devMode?'[name]-[hash:8].js':'[name]-[chunkHash:8].js',
@@ -76,11 +97,11 @@ const webpackBaseConfig = {
         },
 		splitChunks:{
 			name:true,
-			chunks: "initial", // 必须三选一： "initial" | "all"(默认就是all) | "async"
-            minSize: 0, // 最小尺寸，默认0
-            minChunks: 2, // 最小 chunk ，默认1
-            maxAsyncRequests: 1, // 最大异步请求数， 默认1
-            maxInitialRequests: 1, // 最大初始化请求书，默认1
+			chunks: "all", // 必须三选一： "initial" | "all"(默认就是all) | "async"
+            minSize: 30000, // 最小尺寸，默认0
+            minChunks: 1, // 最小 chunk ，默认1
+            maxAsyncRequests: 5, // 最大异步请求数， 默认1
+            maxInitialRequests: 3, // 最大初始化请求书，默认1
             cacheGroups: { // 这里开始设置缓存的 chunks
             	default: {
                     minChunks: 1,
@@ -106,17 +127,24 @@ const webpackBaseConfig = {
             }
 		},
 		minimizer: [
-      new UglifyJsPlugin({
-             cache: true,
-             parallel: true,
-             sourceMap: true // set to true if you want JS source maps
-      }),
-      new OptimizeCSSAssetsPlugin({
+            new UglifyJSPlugin({
+                uglifyOptions:{
+                  warnings: false,
+                  output: {
+                    comments: false,//去掉注释
+                    beautify: false,
+                  }
+                },
+                sourceMap: true,
+                cache: true,
+                parallel: true //开启多线程。默认并发运行数：os.cpus().length - 1 (当前配置的数值为4)
+            }),
+           new OptimizeCSSAssetsPlugin({
 				assetNameRegExp: /\.optimize\.css$/g,
                 cssProcessor: require('cssnano'),
                 cssProcessorOptions: { safe: true, discardComments: { removeAll: true } },
                 canPrint: true
-			})
+		   })
      ]
 	},
 	resolve:{

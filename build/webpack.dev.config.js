@@ -10,6 +10,7 @@ module.exports = merge(webpackBase,{
 		historyApiFallback:true,
 		hot:true,
 		progress:true,
+		inline:true,
 		host:'127.0.0.1',
 		proxy:devServer.proxy
 	},
