@@ -1,7 +1,8 @@
+require('babel-polyfill');
 const merge = require('webpack-merge');
 const webpackBase = require('./webpack.base.config.js');
 const path = require('path');
-
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = merge(webpackBase,{
 	mode: 'production',
@@ -13,5 +14,6 @@ module.exports = merge(webpackBase,{
         chunkFilename: 'bundles/[name].bundle.js'
 	},
 	plugins:[
+		new BundleAnalyzerPlugin()
 	]
 });
