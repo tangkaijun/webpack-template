@@ -38,8 +38,9 @@
   },
   "homepage": "https://github.com/tangkaijun/webpack-template#readme",
   "dependencies": {
-    "eventsource-polyfill": "^0.9.6",
+    "axios": "^0.18.0",
     "babel-polyfill": "^6.26.0",
+    "eventsource-polyfill": "^0.9.6",
     "react": "^16.3.2",
     "react-dom": "^16.3.2"
   },

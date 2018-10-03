@@ -1,0 +1,21 @@
+/**
+ * 用户管理 - 用户列表接口
+ *
+ * @url user/getList
+ *
+ * 详细的说明
+ * uid: userID
+ * name: username
+ * email: 邮件
+ */
+ 
+{
+  "code": 0,
+  "result|5": [
+    {
+      "uid|+1": 1,
+      "name": "@name",
+      "email": "@email"
+    }
+  ]
+}

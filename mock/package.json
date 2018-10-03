@@ -1,0 +1,20 @@
+{
+  "name": "Mock-Server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "server": "nodemon app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.3",
+    "nodemon": "^1.17.3"
+  },
+  "devDependencies": {
+    "express-mockjs": "^0.4.9",
+    "mockjs": "^1.0.1-beta3"
+  }
+}

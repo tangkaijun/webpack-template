@@ -2,3 +2,4 @@ node_modules/**
 dll/**
 dist/**
 logs.json
+mock/node_modules/**
